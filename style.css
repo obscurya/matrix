@@ -1,0 +1,32 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font: 14px sans-serif;
+}
+
+#output {
+    /* margin: 30px; */
+}
+
+#output table {
+    font: 14px sans-serif;
+    border-collapse: collapse;
+    margin: 30px;
+}
+
+#output table tr td {
+    border: 1px solid #bbb;
+    padding: 10px;
+}
+
+#output table tr:first-child {
+    color: #999;
+}
+
+#output table tr td:first-child {
+    color: #999;
+}
