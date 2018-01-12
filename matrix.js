@@ -16,30 +16,38 @@ class Matrix {
         }
     }
 
+    // заполнение матрицы данными
     fill(data) {
         this.data = data;
         this.rows = this.data.length;
         this.columns = this.data[0].length;
     }
 
-    randomize() {
+    // заполнение матрицы случайными данными
+    randomize(min, max) {
         for (var i = 0; i < this.rows; i++) {
             this.data[i] = [];
             for (var j = 0; j < this.columns; j++) {
-                this.data[i][j] = Math.random();
-                // this.data[i][j] = random(0, 9);
+                if (min && max) {
+                    this.data[i][j] = Math.random(min, max);
+                } else {
+                    this.data[i][j] = Math.random();
+                }
             }
         }
     }
 
+    // получение массива данных из матрицы
     getMatrix() {
         return this.data;
     }
 
+    // получение i-строки матрицы
     getRow(index) {
         return this.data[index];
     }
 
+    // получение i-столбца матрицы
     getColumn(index) {
         var column = [];
         for (var i = 0; i < this.rows; i++) {
@@ -48,6 +56,7 @@ class Matrix {
         return column;
     }
 
+    // транспонирование матрицы
     transpose() {
         var data = [];
         for (var i = 0; i < this.columns; i++) {
@@ -56,6 +65,7 @@ class Matrix {
         this.fill(data);
     }
 
+    // сложение исходной матрицы с матрицей m
     add(m) {
         for (var i = 0; i < this.rows; i++) {
             for (var j = 0; j < this.columns; j++) {
@@ -64,6 +74,7 @@ class Matrix {
         }
     }
 
+    // умножение элементов матрицы на скаляр
     scalar(n) {
         for (var i = 0; i < this.rows; i++) {
             for (var j = 0; j < this.columns; j++) {
@@ -72,6 +83,7 @@ class Matrix {
         }
     }
 
+    // применение фуннкции f на элементы матрицы
     map(f) {
         for (var i = 0; i < this.rows; i++) {
             for (var j = 0; j < this.columns; j++) {
@@ -81,6 +93,28 @@ class Matrix {
         }
     }
 
+    // вывод матрицы в консоль
+    print() {
+        console.table(this.data);
+    }
+
+    // создание матрицы-столбца из массива
+    static createRowMatrixFromArray(array) {
+        var nm = new Matrix(array.length, 1);
+        nm.fill([array]);
+        return nm;
+    }
+
+    // получение массива из матрицы-столбца
+    static getArrayFromRowMatrix(m) {
+        var array = [];
+        for (var i = 0; i < m.rows; i++) {
+            array.push(m.data[i][0]);
+        }
+        return array;
+    }
+
+    // перемножение двух матриц
     static multiply(a, b) {
         var data = [];
         for (var i = 0; i < a.rows; i++) {
@@ -100,10 +134,6 @@ class Matrix {
         var nm = new Matrix(a.rows, b.columns);
         nm.fill(data);
         return nm;
-    }
-
-    print() {
-        console.table(this.data);
     }
 }
 
@@ -127,18 +157,16 @@ class NeuralNetwork {
     }
 
     feedforward(input) {
-        input.transpose(); // сделать отдельной функцией!!
-        var input_layer = input;
+        var input_layer = Matrix.createRowMatrixFromArray(input);
         var hidden_layer = Matrix.multiply(this.weightsOnInput, input_layer);
         hidden_layer.add(this.hidden_bias);
         hidden_layer.map(sigmoid);
 
-        var output = Matrix.multiply(this.weightsOnOutput, hidden_layer);
-        output.add(this.output_bias);
-        output.map(sigmoid);
-        output.transpose();
+        var output_layer = Matrix.multiply(this.weightsOnOutput, hidden_layer);
+        output_layer.add(this.output_bias);
+        output_layer.map(sigmoid);
 
-        return output;
+        return Matrix.getArrayFromRowMatrix(output_layer);
     }
 }
 
@@ -146,11 +174,8 @@ function sigmoid(value) {
     return 1 / (1 + Math.exp(-value));
 }
 
-var input = new Matrix(1, 5);
-input.randomize();
-input.print();
-
-var nn = new NeuralNetwork(input.data[0].length, 2, 2);
-
+var input = [0, 1];
+var nn = new NeuralNetwork(input.length, 2, 1);
 var output = nn.feedforward(input);
-output.print();
+
+console.log(output);
