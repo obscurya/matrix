@@ -29,7 +29,7 @@ class Matrix {
             this.data[i] = [];
             for (var j = 0; j < this.columns; j++) {
                 if (min && max) {
-                    this.data[i][j] = Math.random(min, max);
+                    this.data[i][j] = random(min, max);
                 } else {
                     this.data[i][j] = Math.random();
                 }
