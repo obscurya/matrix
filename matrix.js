@@ -2,119 +2,155 @@ function random(min, max) {
     return Math.floor(Math.random() * (max + 1 - min) + min);
 }
 
-function Matrix(rows, columns) {
-    this.rows = (rows) ? rows : 0;
-    this.columns = (columns) ? columns : 0;
-    this.matrix = [];
+class Matrix {
+    constructor(rows, columns) {
+        this.rows = (rows) ? rows : 0;
+        this.columns = (columns) ? columns : 0;
+        this.data = [];
 
-    this.fill = function (matrix) {
-        if (matrix) {
-            this.matrix = matrix;
-            this.rows = this.matrix.length;
-            this.columns = this.matrix[0].length;
-        } else {
-            for (var i = 0; i < this.rows; i++) {
-                this.matrix[i] = [];
-                for (var j = 0; j < this.columns; j++) {
-                    this.matrix[i][j] = random(0, 9);
-                }
+        for (var i = 0; i < this.rows; i++) {
+            this.data[i] = [];
+            for (var j = 0; j < this.columns; j++) {
+                this.data[i][j] = 0;
             }
         }
     }
 
-    this.fill();
-
-    this.getMatrix = function () {
-        return this.matrix;
+    fill(data) {
+        this.data = data;
+        this.rows = this.data.length;
+        this.columns = this.data[0].length;
     }
 
-    this.getRow = function (index) {
-        return this.matrix[index];
+    randomize() {
+        for (var i = 0; i < this.rows; i++) {
+            this.data[i] = [];
+            for (var j = 0; j < this.columns; j++) {
+                this.data[i][j] = Math.random();
+                // this.data[i][j] = random(0, 9);
+            }
+        }
     }
 
-    this.getColumn = function (index) {
+    getMatrix() {
+        return this.data;
+    }
+
+    getRow(index) {
+        return this.data[index];
+    }
+
+    getColumn(index) {
         var column = [];
         for (var i = 0; i < this.rows; i++) {
-            column.push(this.matrix[i][index]);
+            column.push(this.data[i][index]);
         }
         return column;
     }
 
-    this.transpose = function () {
-        var matrix = [];
+    transpose() {
+        var data = [];
         for (var i = 0; i < this.columns; i++) {
-            matrix[i] = this.getColumn(i);
+            data[i] = this.getColumn(i);
         }
-        this.fill(matrix);
+        this.fill(data);
     }
 
-    this.multiply = function (m) {
-        var matrix = [];
+    add(m) {
         for (var i = 0; i < this.rows; i++) {
-            var row = this.getRow(i);
-            matrix[i] = [];
-            for (var j = 0; j < m.columns; j++) {
-                var column = m.getColumn(j),
+            for (var j = 0; j < this.columns; j++) {
+                this.data[i][j] += m.data[i][j];
+            }
+        }
+    }
+
+    scalar(n) {
+        for (var i = 0; i < this.rows; i++) {
+            for (var j = 0; j < this.columns; j++) {
+                this.data[i][j] *= n;
+            }
+        }
+    }
+
+    map(f) {
+        for (var i = 0; i < this.rows; i++) {
+            for (var j = 0; j < this.columns; j++) {
+                var value = this.data[i][j];
+                this.data[i][j] = f(value);
+            }
+        }
+    }
+
+    static multiply(a, b) {
+        var data = [];
+        for (var i = 0; i < a.rows; i++) {
+            var row = a.getRow(i);
+            data[i] = [];
+            for (var j = 0; j < b.columns; j++) {
+                var column = b.getColumn(j),
                     sum = 0,
                     k = 0;
                 while (k < column.length) {
                     sum += (row[k] * column[k]);
                     k++;
                 }
-                matrix[i][j] = sum;
+                data[i][j] = sum;
             }
         }
-        var nm = new Matrix(this.rows, m.columns);
-        nm.fill(matrix);
+        var nm = new Matrix(a.rows, b.columns);
+        nm.fill(data);
         return nm;
     }
 
-    this.draw = function (out) {
-        var str = '<table><tr><td></td>';
-        for (var i = 0; i < this.columns; i++) {
-            str += '<td>C' + i + '</td>';
-        }
-        str += '</tr>';
-        for (var i = 0; i < this.rows; i++) {
-            str += '<tr><td>R' + i + '</td>';
-            for (var j = 0; j < this.columns; j++) {
-                str += '<td>' + this.matrix[i][j] + '</td>';
-            }
-            str += '</tr>';
-        }
-        str += '</table>';
-        out.innerHTML += str;
+    print() {
+        console.table(this.data);
     }
 }
 
-var output = document.getElementById('output');
+class NeuralNetwork {
+    constructor(input, hidden, output) {
+        this.input = input;
+        this.hidden = hidden;
+        this.output = output;
 
-var a = new Matrix(1, 5),
-    b = new Matrix(1, 5);
+        this.weightsOnInput = new Matrix(this.hidden, this.input);
+        this.weightsOnOutput = new Matrix(this.output, this.hidden);
 
-a.fill();
-b.fill();
+        this.weightsOnInput.randomize();
+        this.weightsOnOutput.randomize();
 
-var c = a.multiply(b);
+        this.hidden_bias = new Matrix(this.hidden, 1);
+        this.output_bias = new Matrix(this.output, 1);
 
-c.draw(output);
+        this.hidden_bias.randomize();
+        this.output_bias.randomize();
+    }
 
-// var a = new Matrix(2, 3);
-//
-// var m1 = a.getMatrix();
-//
-// a.transpose();
-//
-// var m2 = a.getMatrix();
-//
-// var a = new Matrix(),
-//     b = new Matrix();
-//
-// a.fill(m1);
-// b.fill(m2);
-//
-// var c = a.multiply(b);
-//
-// a.draw(output);
-// b.draw(output);
-// c.draw(output);
+    feedforward(input) {
+        input.transpose(); // сделать отдельной функцией!!
+        var input_layer = input;
+        var hidden_layer = Matrix.multiply(this.weightsOnInput, input_layer);
+        hidden_layer.add(this.hidden_bias);
+        hidden_layer.map(sigmoid);
+
+        var output = Matrix.multiply(this.weightsOnOutput, hidden_layer);
+        output.add(this.output_bias);
+        output.map(sigmoid);
+        output.transpose();
+
+        return output;
+    }
+}
+
+function sigmoid(value) {
+    return 1 / (1 + Math.exp(-value));
+}
+
+var input = new Matrix(1, 5);
+input.randomize();
+input.print();
+
+var nn = new NeuralNetwork(input.data[0].length, 2, 2);
+
+var output = nn.feedforward(input);
+output.print();
